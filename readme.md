@@ -10,12 +10,12 @@ This project benchmarks multiple image captioning architectures on three Arabic 
 
 # Model Architectures
 
-The framework evaluates five state-of-the-art image captioning architectures:
+The framework evaluates four state-of-the-art image captioning architectures:
 
-1.Encoder–Decoder (VGG19 + LSTM):** Uses a pre-trained VGG19 network to extract deep visual features, paired with a sequence-generating Long Short-Term Memory (LSTM) decoder network.
-2.MobileNetV2 + LSTM + Attention:** Combines a lightweight, efficient MobileNetV2 feature extractor with an LSTM decoder utilizing a spatial attention layer to focus on relevant image regions dynamically.
-3.MobileNetV2 + GRU + Attention:** Swaps the sequential decoder for a Gated Recurrent Unit (GRU) to optimize computational efficiency while keeping attention layers intact.
-4.Top-Down Attention Model:** Employs a dual-LSTM network design. An attention LSTM determines where to focus visual field dependencies, while a language generation LSTM predicts output text sequences.
+1.Encoder–Decoder (VGG19 + LSTM): Uses a pre-trained VGG19 network to extract deep visual features, paired with a sequence-generating Long Short-Term Memory (LSTM) decoder network.
+2.MobileNetV2 + LSTM + Attention: Combines a lightweight, efficient MobileNetV2 feature extractor with an LSTM decoder utilizing a spatial attention layer to focus on relevant image regions dynamically.
+3.MobileNetV2 + GRU + Attention: Swaps the sequential decoder for a Gated Recurrent Unit (GRU) to optimize computational efficiency while keeping attention layers intact.
+4.Top-Down Attention Model: Employs a dual-LSTM network design. An attention LSTM determines where to focus visual field dependencies, while a language generation LSTM predicts output text sequences.
 
 ### Key Characteristics
 

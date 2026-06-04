@@ -151,13 +151,13 @@ The framework evaluates four state-of-the-art image captioning architectures:
 
 Models trained on ERI-AIC demonstrated:
 
-? Better semantic alignment
+   Better semantic alignment
 
-? Improved contextual understanding
+   Improved contextual understanding
 
-? Fewer hallucinated objects
+   Fewer hallucinated objects
 
-? Stronger robustness on unseen scenes
+   Stronger robustness on unseen scenes
 
 Compared with models trained on Arabic Flickr8k and Arabic MS-COCO.
 

@@ -20,6 +20,13 @@ The framework evaluates four state-of-the-art image captioning architectures:
 
 4.Top-Down Attention Model: Employs a dual-LSTM network design. An attention LSTM determines where to focus visual field dependencies, while a language generation LSTM predicts output text sequences.
 
+## Related Work
+
+This project introduces a fifth architecture to the benchmark:
+
+
+* See the (https://github.com/rm2520/ERI_AIC_model2) project, which provides Efficientnet to extract features from image and Decoder as Transformer to generate caption.
+
 ### Key Characteristics
 
 - 4,000 images

@@ -12,7 +12,7 @@ This project benchmarks multiple image captioning architectures on three Arabic 
 
 The framework evaluates four state-of-the-art image captioning architectures:
 
-1.Encoder–Decoder (VGG19 + LSTM): Uses a pre-trained VGG19 network to extract deep visual features, paired with a sequence-generating Long Short-Term Memory (LSTM) decoder network.
+1.Encoder–Decoder (VGG19 + LSTM): This architecture couples a pre-trained VGG19 network as the encoder to extract deep visual features with a Long Short-Term Memory (LSTM) decoder network for sequence generation. Notably, text preprocessing is handled directly without the integration of AraBERT.
 
 2.MobileNetV2 + LSTM + Attention: Combines a lightweight, efficient MobileNetV2 feature extractor with an LSTM decoder utilizing a spatial attention layer to focus on relevant image regions dynamically.
 

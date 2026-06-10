@@ -85,110 +85,69 @@ class SeqtoSeq(nn.Module):
 
 class Jundi(nn.Module):
     #jundi
-    def __init__(self, num_classes, **kwargs):
+    def __init__(self, num_classes,img_dim=4096, **kwargs):
         super(Jundi, self).__init__()
-        self.middle_dim = 256
-        self.hidden_size = 512
-        self.num_classes=num_classes
-        feature_dim=1280
+        middle_dim = 256
+        hidden_size = 512
         num_layers=1
-        dropout=0.5
-        self.img_embedding = nn.Linear(feature_dim, self.middle_dim)
 
-
+        self.img_embedding = nn.Linear(img_dim, middle_dim)
+        self.tanh=nn.Tanh()
         self.relu = nn.ReLU()
-        self.tanh =nn.Tanh()
-        self.dropout = nn.Dropout(p=dropout)
-        self.text_embedding= nn.Embedding (num_classes,self.middle_dim)
-        self.gru=nn.GRU(self.hidden_size,self.hidden_size,num_layers, batch_first=True)
-        self.u_att = nn.Linear(self.middle_dim, self.hidden_size)
-        self.w_att = nn.Linear(self.hidden_size, self.hidden_size)
-        self.v_att = nn.Linear(self.hidden_size, 1)
+        self.text_embedding= nn.Embedding (num_classes,middle_dim)
+        self.gru=nn.GRU(middle_dim,hidden_size,num_layers, batch_first=True)
 
-        self.fc1 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.fc1 = nn.Linear(hidden_size, num_classes)
 
-        self.fc2 = nn.Linear(self.hidden_size, num_classes)
-        self.init_weights()  # initialize some layers with the uniform distribution
 
-    def init_weights(self):
-        """
-        Initializes some parameters with values from the uniform distribution, for easier convergence.
-        """
-        self.text_embedding.weight.data.uniform_(-0.1, 0.1)
-        self.fc2.bias.data.fill_(0)
-        self.fc2.weight.data.uniform_(-0.1, 0.1)
+
 
     def forward(self, img_fet,text_fet,length):
-        batch_size = img_fet.size(0)
-        img_fet = img_fet.permute(0, 2, 3, 1)
 
-
-
-
-        state = None
-        image_embedding= self.relu(self.img_embedding(img_fet))
-        img_dim = image_embedding.size(-1)
-        image_embedding = image_embedding.view(batch_size, -1, img_dim)
+        image_embedding= self.img_embedding(img_fet)
+        image_embedding=self.tanh(image_embedding)
         text_embedding=self.text_embedding(text_fet)
+        embeddings = torch.cat((image_embedding.unsqueeze(1), text_embedding), dim=1)
 
-        h1,c1 = self.init_hidden_state(batch_size)  # (batch_size, decoder_dim)
-        # Create tensors to hold word predicion scores
-
-        predictions = torch.zeros(batch_size, max(length), self.num_classes).to(device)
-        for t in range(max(length)):
-            input = text_embedding[:, t, :]
-            score = self.v_att(self.tanh(self.u_att(image_embedding) + self.w_att(h1.unsqueeze(1))))
-            context_vector = score * image_embedding
-            context_vector=torch.mean(context_vector,dim=1)
-            embeddings = torch.cat((context_vector.unsqueeze(1), input.unsqueeze(1)), dim=-1)
-            out, state = self.gru(embeddings, state)
-            h1=state.squeeze(0)
-            out =self.relu(self.fc1(out))
-            out= torch.reshape(out, (-1, out.shape[2]))
-            out=self.fc2(self.dropout(out))
-            predictions[:, t, :] = out
-
-        return predictions
+        packed = pack_padded_sequence(embeddings, length, batch_first=True)
 
 
-    def init_hidden_state(self, batch_size):
-        """
-        Creates the initial hidden and cell states for the decoder's LSTM based on the encoded images.
-        :param encoder_out: encoded images, a tensor of dimension (batch_size, num_pixels, encoder_dim)
-        :return: hidden state, cell state
-        """
-        h = torch.zeros(batch_size, self.hidden_size).to(device)  # (batch_size, decoder_dim)
-        c = torch.zeros(batch_size, self.hidden_size).to(device)
-        return h, c
 
+        hiddens, _ = self.gru(packed)
+        if not self.training:
+            hiddens_unpack, _= nn.utils.rnn.pad_packed_sequence(hiddens, batch_first=True)
+            outputs = self.fc1(hiddens_unpack)
+            return outputs
+
+
+
+
+
+        outputs=self.fc1(hiddens[0])
+
+
+
+
+
+
+        return outputs
 
     def caption_image(self,img_fet,vocabulary,max_length=20):
-
+        state=None
         result_caption = []
-        img_fet = img_fet.view(img_fet.size(0), img_fet.size(2) * img_fet.size(3), img_fet.size(1))
-        state = None
-        image_embedding = self.relu(self.img_embedding(img_fet))
-        text=  torch.tensor([vocabulary.word2idx['<start>']]).to(device)
-        text_embedding = self.text_embedding(text)
-        h1 = self.init_hidden_state(1)
 
-        inputs=text_embedding
+        image_embedding = self.img_embedding(img_fet)
+        image_embedding = self.tanh(image_embedding).unsqueeze(0)
+        inputs=image_embedding
 
 
         for _ in range(max_length):
-            score = self.v_att(self.tanh(self.u_att(image_embedding) + self.w_att(h1.unsqueeze(1))))
-            context_vector = score * image_embedding
-            context_vector = torch.mean(context_vector, dim=1)
-            embeddings = torch.cat((context_vector.unsqueeze(1), inputs.unsqueeze(1)), dim=-1)
-            out, state = self.gru(embeddings, state)  # hiddens: (batch_size, 1, hidden_size)
-            h1 = state.squeeze(0)
-            out = self.relu(self.fc1(out))
-            out = torch.reshape(out, (-1, out.shape[2]))
-            outputs = self.fc2(self.dropout(out))
+            hiddens, state = self.gru(inputs, state)  # hiddens: (batch_size, 1, hidden_size)
+            outputs = self.fc1(hiddens.squeeze(0))  # outputs:  (batch_size, vocab_size)
             predicted = outputs.argmax(1)  # predicted: (batch_size)
             result_caption.append(predicted.item())
             inputs = self.text_embedding(predicted)  # inputs: (batch_size, embed_size)
-
+            inputs = inputs.unsqueeze(0)  # inputs: (batch_size, 1, embed_size)
             if vocabulary.idx2word[predicted.item()] == "<end>":
                 break
 
